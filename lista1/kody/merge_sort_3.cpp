@@ -1,9 +1,10 @@
 #include <iostream>
 #include <math.h>
+#include "sort_stats.h"
 using namespace std;
 
 
-int merge_3(int list[], int begin, int middle1, int middle2, int end, int number) {
+SortStats merge_3(int list[], int begin, int middle1, int middle2, int end, SortStats number) {
     int len_left = middle1 - begin + 1;
     int len_middle = middle2 - middle1;
     int len_right = end - middle2;
@@ -13,16 +14,19 @@ int merge_3(int list[], int begin, int middle1, int middle2, int end, int number
     int right_list[len_right];
 
     for (int i = begin; i < begin+len_left; i++) {
+        number.comparison++;
         left_list[i-begin] = list[i];
-        number++;
+        number.assign++;
     }
     for (int i = middle1; i < middle1+len_middle; i++) {
+        number.comparison++;
         middle_list[i-middle1] = list[i+1];
-        number++;
+        number.assign++;
     }
     for (int i = middle2; i < middle2+len_right; i++) {
+        number.comparison++;
         right_list[i-middle2] = list[i+1];
-        number++;
+        number.assign++;
     }
 
     int left_index = 0;
@@ -32,83 +36,103 @@ int merge_3(int list[], int begin, int middle1, int middle2, int end, int number
     bool left_valid, middle_valid, right_valid;
     int minimum;
     while (left_index + middle_index + right_index <= len_left+len_middle+len_right-1){ 
+        number.comparison++;
         if (left_index < len_left) {
             left_valid = true;
         } else {
             left_valid = false;
         }
+        number.comparison++;
         if (middle_index < len_middle) {
             middle_valid = true;
         } else {
             middle_valid = false;
         }
+        number.comparison++;
         if (right_index < len_right) {
             right_valid = true;
         } else {
             right_valid = false;
         }
-
+        number.comparison++;
         if (left_valid and middle_valid and right_valid) {
             minimum = left_list[left_index];
+            number.assign++;
             left_index++;
             if (middle_list[middle_index] < minimum and right_list[right_index] < minimum) {
                 left_index--;
                 if (middle_list[middle_index] < right_list[right_index]) {
                     minimum = middle_list[middle_index];
+                    number.assign++;
                     middle_index++;
                 } else {
                     minimum = right_list[right_index];
+                    number.assign++;
                     right_index++;
                 }
+                number.comparison++;
 
             }else if (middle_list[middle_index] < minimum) {
                 minimum = middle_list[middle_index];
+                number.assign++;    
                 middle_index++;
                 left_index--;
 
             }else if (right_list[right_index] < minimum) {
                 minimum = right_list[right_index];
+                number.assign++;
                 right_index++;
                 left_index--;
             }
+            number.comparison = number.comparison + 3; // dla wszystkich if
             
         } else if (left_valid and middle_valid) {
             minimum = left_list[left_index];
+            number.assign++;
             left_index++;
             if (middle_list[middle_index] < minimum) {
                 minimum = middle_list[middle_index];
+                number.assign++;
                 middle_index++;
                 left_index--;
             }
         } else if (left_valid and right_valid) {
             minimum = left_list[left_index];
+            number.assign++;
             left_index++;
             if (right_list[right_index] < minimum) {
                 minimum = right_list[right_index];
+                number.assign++;
                 right_index++;
                 left_index--;
             }
         } else if (middle_valid and right_valid) {
             minimum = middle_list[middle_index];
+            number.assign++;
             middle_index++;
             if (right_list[right_index] < minimum) {
                 minimum = right_list[right_index];
+                number.assign++;
                 right_index++;
                 middle_index--;
             }
         } else if (left_valid) {
             minimum = left_list[left_index];
+            number.assign++;
             left_index++;
         } else if (middle_valid) {
             minimum = middle_list[middle_index];
+            number.assign++;
             middle_index++;
         } else if (right_valid) {
             minimum = right_list[right_index];
+            number.assign++;
             right_index++;
         }
+        number.comparison = number.comparison + 7; // dla wszystkich if
 
         list[main_index] = minimum;
-        number++;
+        number.assign++;
         main_index++;
 
     }
@@ -116,7 +140,7 @@ int merge_3(int list[], int begin, int middle1, int middle2, int end, int number
     
 }
 
-int merge_sort_3(int list[], int begin, int end, int number){
+SortStats merge_sort_3(int list[], int begin, int end, SortStats number){
     int first_middle, second_middle;
     if (begin < end-1)
     {
@@ -129,14 +153,18 @@ int merge_sort_3(int list[], int begin, int end, int number){
     }
     else {  
         int a = list[begin];
+        number.assign++;
         int b = list[end];
+        number.assign++;
         if (a > b){
             list[begin] = b;
-            number++;
+            number.assign++;
             list[end] = a;
-            number++;
+            number.assign++;
         }
+        number.comparison++;
     }
+    number.comparison++;
     return number;
 }
 

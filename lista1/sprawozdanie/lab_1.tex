@@ -37,24 +37,32 @@
 
 \section{Wstęp}
 Celem pracy była analiza sześciu zaimplementowanych algorytmów sortowania: \emph{Insertion Sort}, jego modyfikacji wstawiającej elementy parami (\emph{Insertion Sort Pairs}), \emph{Merge Sort} (klasyczny dwudzielny), jego wariantu trójdzielnego (\emph{Merge Sort 3}), a także \emph{Heap Sort} w wersji binarnej i ternarnej.
-Dla każdego algorytmu zliczano liczbę elementarnych operacji (przestawień), a następnie zebrano wyniki dla rozmiarów tablic $n=10,\dots,1999$. Generator danych używa stałego ziarna \texttt{srand(10)}, dzięki czemu każde uruchomienie daje identyczne wektory wejściowe.
+Dla każdego algorytmu zliczano liczbę elementarnych operacji (przestawień i porównań), a następnie zebrano wyniki dla rozmiarów tablic $n=1000,\dots,200000$. Generator danych używa stałego ziarna \texttt{srand(10)}, dzięki czemu każde uruchomienie daje identyczne wektory wejściowe.
 Wszystkie pomiary wykonano tym samym programem testującym.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=.68\textwidth]{operations_all.png}
-  \caption{Liczba operacji w funkcji rozmiaru wejścia --- porównanie wszystkich metod.}
-  \label{fig:all}
+  \begin{subfigure}{.45\textwidth}
+    \centering\includegraphics[width=\linewidth]{operations_all.png}
+    \caption{Liczba przypisań w funkcji ~---~ porównanie wszystkich metod.}
+    \label{fig:all}
+  \end{subfigure}
+  \begin{subfigure}{.45\textwidth}
+    \centering\includegraphics[width=\linewidth]{operations_all_comparison.png}
+    \caption{Liczba porównań w funkcji ~---~ porównanie wszystkich metod.}
+    \label{fig:all_comparison}
+  \end{subfigure}
 \end{figure}
+
 
 \section{Opis algorytmów}
 \begin{itemize}
-  \item \textbf{Insertion Sort} --- sortowanie przez wstawianie, złożoność średnia i pesymistyczna $O(n^2)$. Dobre dla prawie posortowanych danych.
-  \item \textbf{Insertion Sort Pairs} --- modyfikacja, w której do listy wstawia się jednocześnie parę elementów (po wcześniejszym ich uporządkowaniu). Teoretycznie nadal $O(n^2)$, w praktyce redukuje liczbę przesunięć.
-  \item \textbf{Merge Sort} --- klasyczne dziel i zwyciężaj; rekurencyjnie dzieli tablicę na dwie połowy. Złożoność $O(n\log n)$.
-  \item \textbf{Merge Sort 3} --- wariant dzielący na trzy części i łączący. Teoretycznie również $O(n\log n)$, lecz z inną stałą.
-  \item \textbf{Heap Sort (binarny)} --- budowa kopca. Złożoność $O(n\log n)$.
-  \item \textbf{Heap Sort 3} --- analogiczny do wersji binarnej, lecz kopiec ternarny (trzech potomków); mniejsza wysokość kopca, ale droższe pojedyncze \texttt{heapify}.
+  \item \textbf{Insertion Sort}  ~---~ sortowanie przez wstawianie, złożoność średnia i pesymistyczna $O(n^2)$. Dobre dla prawie posortowanych danych.
+  \item \textbf{Insertion Sort Pairs}  ~---~ modyfikacja, w której do listy wstawia się jednocześnie parę elementów (po wcześniejszym ich uporządkowaniu). Teoretycznie nadal $O(n^2)$, w praktyce redukuje liczbę przesunięć.
+  \item \textbf{Merge Sort}  ~---~ klasyczne dziel i zwyciężaj; rekurencyjnie dzieli tablicę na dwie połowy. Złożoność $O(n\log n)$.
+  \item \textbf{Merge Sort 3}  ~---~ wariant dzielący na trzy części i łączący. Teoretycznie również $O(n\log n)$, lecz z inną stałą.
+  \item \textbf{Heap Sort (binarny)}  ~---~ budowa kopca. Złożoność $O(n\log n)$.
+  \item \textbf{Heap Sort 3}  ~---~ analogiczny do wersji binarnej, lecz kopiec ternarny (trzech potomków); mniejsza wysokość kopca, ale droższe pojedyncze \texttt{heapify}.
 \end{itemize}
 
 \section{Najciekawsze fragmenty kodu: \emph{Merge Sort}}
@@ -63,88 +71,103 @@ Poniżej pokazano dwa kluczowe fragmenty: funkcję sklejającą i rekurencyjne d
 
 \noindent\textbf{Funkcja \texttt{merge} (fragment z \texttt{merge\_sort.cpp}):}
 \begin{lstlisting}[style=cppstyle,caption={Sklejanie dwóch przedziałów w Merge Sort.},label={lst:merge}]
-int merge(int list[], int begin, int middle, int end, int number) {
+SortStats merge(int list[], int begin, int middle, int end, SortStats number) {
     int len_left = middle - begin + 1;
     int len_right = end - middle;
     int left_list[len_left];
     int right_list[len_right];
+
     for (int i = begin; i < begin+len_left; i++) {
+        number.comparison++;
         left_list[i-begin] = list[i];
-        number++;
+        number.assign++;
     }
+
     for (int i = middle; i < middle+len_right; i++) {
+        number.comparison++;
         right_list[i-middle] = list[i+1];
-        number++;
+        number.assign++;
     }
+
     int left_index = 0;
-    right_index = 0;
+    int right_index = 0;
+
     for (int i = begin; i <= end; i++) {
-    	if ((left_index < len_left and left_list[left_index] <= right_list[right_index]) or right_index >= len_right){
-    		list[i] = left_list[left_index];
-    		left_index++;
-    		number++;
-    		
-    	}
-    	else {
-    		list[i] = right_list[right_index]; 
-    		right_index++;
-    		number++;
-    		
-    	}
-    	
+        number.comparison++;
+        if ((left_index < len_left and left_list[left_index] <= right_list[right_index]) or right_index >= len_right){
+            list[i] = left_list[left_index];
+            left_index++;
+            number.assign++;
+        } else {
+            list[i] = right_list[right_index]; 
+            right_index++;
+            number.assign++;
+        }
+
+        number.comparison++;
     }
     return number;
 }
 \end{lstlisting}
-
+\newpage
 \noindent\textbf{Podział i wywołania rekurencyjne:}
 \begin{lstlisting}[style=cppstyle,caption={Rekurencyjny podział i łączenie.},label={lst:mergesort}]
-int merge_sort(int list[], int begin, int end, int number) {
+SortStats merge_sort(int list[], int begin, int end, SortStats number) {
     if (begin < end) {
         int middle = floor((begin+end)/2);
         number = merge_sort(list, begin, middle, number);
         number = merge_sort(list, middle+1, end, number);
         number = merge(list, begin, middle, end, number);
     }
+    number.comparison++;
     return number;
 }
 \end{lstlisting}
 
 
 \section{Porównania i wyniki}
-Na rys.~\ref{fig:all} widać wyraźny rozjazd między metodami $O(n^2)$ (\emph{Insertion}) i $O(n\log n)$ (rodzina \emph{Merge}/\emph{Heap}). Aby lepiej zobaczyć indywidualne przebiegi, poniżej zamieszczono mini-wykresy (oryginały zapisane w plikach PNG).
+Na rys.~\ref{fig:all} i rys.~\ref{fig:all_comparison} widać wyraźny rozjazd między metodami $O(n^2)$ (\emph{Insertion}) i $O(n\log n)$ (rodzina \emph{Merge}/\emph{Heap}). 
+Aby lepiej zobaczyć jeszcze różnice pomiędzy wersją klasyczną a modyfikowaną, poniżej zamieszczono mini-wykresy (oryginały zapisane w plikach PNG).
+Jest interesujące, że w przypadku \texttt{merge\_sort} i \texttt{merge\_sort\_3}, \texttt{merge\_sort\_3} wykonuje mniej przypisań, ale o wiele więcej porównań.
 
 \begin{figure}[h]
   \centering
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{insertion_sort.png}
-    \caption{Insertion Sort}
+    \centering\includegraphics[width=\linewidth]{insertion_sort_vs_insertion_sort_pairs.png}
+    \caption{Insertion Sort vs Insertion Sort Pairs dla przypisań}
   \end{subfigure}
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{insertion_sort_pairs.png}
-    \caption{Insertion Sort Pairs}
+    \centering\includegraphics[width=\linewidth]{merge_sort_vs_merge_sort_3.png}
+    \caption{Merge Sort vs Merge Sort 3 dla przypisań}
   \end{subfigure}
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{merge_sort.png}
-    \caption{Merge Sort}
+    \centering\includegraphics[width=\linewidth]{heap_sort_vs_heap_sort_3.png}
+    \caption{Heap Sort vs Heap Sort 3 dla przypisań}
   \end{subfigure}
 
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{merge_sort_3.png}
-    \caption{Merge Sort 3}
+    \centering\includegraphics[width=\linewidth]{insertion_sort_vs_insertion_sort_pairs_comparison.png}
+    \caption{Insertion Sort vs Insertion Sort Pairs dla porównań}
   \end{subfigure}
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{heap_sort.png}
-    \caption{Heap Sort}
+    \centering\includegraphics[width=\linewidth]{merge_sort_vs_merge_sort_3_comparison.png}
+    \caption{Merge Sort vs Merge Sort 3 dla porównań}
   \end{subfigure}
   \begin{subfigure}{.32\textwidth}
-    \centering\includegraphics[width=\linewidth]{heap_sort_3.png}
-    \caption{Heap Sort 3}
+    \centering\includegraphics[width=\linewidth]{heap_sort_vs_heap_sort_3_comparison.png}
+    \caption{Heap Sort vs Heap Sort 3 dla porównań}
   \end{subfigure}
-  \caption{Mini-wykresy: liczba operacji w funkcji $n$ dla każdego algorytmu.}
+  \caption{Mini-wykresy: liczba operacji(przypisań lub porównań) dla porównania każdego algorytmu z jego modyfikacją.}
 \end{figure}
-
-\subsection{Tabela porównawcza złożoności i własności}
+Warto również przedstawić wykres pokazujący, jak wyglądają wyniki,
+gdy zbieramy informacje o liczbie przypisań, ale nie zmieniamy typu
+danych z \texttt{int} na \texttt{long long}, co powoduje przepełnienia i błędne wyniki dla dużych $n$. Widać wtedy, że krzywe dla algorytmów $O(n^2)$ rosną o tyle szybko, że w pewnym momencie zostają ujemne. 
+\begin{figure}
+  \centering
+  \includegraphics[width=.68\textwidth]{operations_all_failed.png}
+  \caption{Liczba przypisań w funkcji  ~---~ porównanie wszystkich metod (jeśli nie zmienimy typu danych i dojdzie do przepełnienia).}
+\end{figure}
+\subsection{Tabela porównawcza złożoności}
 \begin{center}
 \begin{tabular}{@{}lcccc@{}}
 \toprule
