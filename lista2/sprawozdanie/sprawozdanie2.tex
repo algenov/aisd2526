@@ -1,0 +1,149 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+
+% -------- ciemny styl kodu ---------
+\definecolor{codebg}{HTML}{1E1E1E}
+\definecolor{codefg}{HTML}{D4D4D4}
+\definecolor{keyword}{HTML}{569CD6}
+\definecolor{string}{HTML}{CE9178}
+\definecolor{comment}{HTML}{6A9955}
+\definecolor{typecolor}{HTML}{4EC9B0}
+
+\lstdefinestyle{darkcode}{
+backgroundcolor=\color{codebg},
+basicstyle=\ttfamily\small\color{codefg},
+keywordstyle=\color{keyword}\bfseries,
+stringstyle=\color{string},
+commentstyle=\color{comment}\itshape,
+numbers=left,
+numberstyle=\tiny\color{gray},
+breaklines=true,
+frame=single,
+}
+
+\title{Sprawozdanie – Algorytmy sortowania \\ Lista 2}
+\author{Alexander Genov}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Wprowadzenie}
+
+Na tej liście trzeba było zaimplementować kilka klasycznych algorytmów sortowania:
+QUICK SORT (także wersję z trzema częściami), RADIX SORT dla różnych podstaw $d$,
+INSERTION SORT na własnej liście, oraz BUCKET SORT i jego modyfikację dla dowolnych danych.
+
+Wszystkie pomiary zrobione dla danych losowych generowanych \texttt{mt19937} w C++.
+
+\section{Wybrane fragmenty kodu}
+
+
+\subsection{Najciekawszy fragment – modyfikacja BUCKET SORT}
+
+To moim zdaniem najciekawsza część całej listy,
+bo trzeba było ``rozciągnąć'' klasyczny BUCKET SORT (który działa tylko na $[0,1)$)
+na dowolne dane.  
+Zrobiłem to po prostu przez normalizację:
+
+\[
+x' = \frac{x - \min}{\max - \min}.
+\]
+
+Działa to niestety nie za bardzo dobrze, bo trzeba jeszcze zabiezpieczyć się od nieścisłości obliczeniowej, która występuje w C++. Najpierw miałem pomysł jeszcze dzielić przez jaką bardzo małą liczbę, żeby ppo normalizacji liczby były mniejsze od jedynki.
+\[
+x' = \frac{x - \min}{\max - \min + \min_float}.
+\]
+Ale okazało się, że o tyle małej liczby nie starczy. Więc, w bucket sort trzeba było zrobić w taki sposób:
+\begin{lstlisting}[style=darkcode]
+        if (index < 0) index = 0;        // just in case of some weird float values
+        if (index >= n) index = n - 1;
+\end{lstlisting}
+\begin{lstlisting}[style=darkcode]
+ for (int i = 0; i < n; i++)
+    {
+        list[i] = (list[i] - min_val)/(max_val - min_val);
+    }
+
+    if (max_val == min_val) {
+        return;
+    }
+
+    bucket_sort(list, n);
+
+    for (int i = 0; i < n; i++)
+    {
+        list[i] = list[i] * (max_val - min_val) + min_val;
+    }
+\end{lstlisting}
+
+\section{Wyniki testów}
+
+\subsection{Porównanie algorytmów całkowitoliczbowych}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{comparisons_int_sorts.png}
+\caption{Porównania – QUICK, QUICK (3 części) i RADIX (2,10,16).}
+\end{figure}
+
+Na wykresie widać, że dla większych danych RADIX SORT wygrywa, zwłaszcza dla podstawy 16.
+Ale modyfikacja z \texttt{base=2} ma najwięcej operacji.
+
+\subsection{RADIX SORT – różne podstawy}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{radix_comparisons_bases.png}
+\caption{RADIX: wpływ podstawy $d$.}
+\end{figure}
+
+Baza 2 robi bardzo dużo kroków (każdy bit osobno), więc wypada najgorzej.
+Bazy 10 i 16 mają o wiele mniej etapów i dzięki temu krzywa rośnie wolniej.
+Najlepsze wyniki dała baza 16.
+
+\subsection{BUCKET SORT – dane $(0,1)$ vs dane $0..100000$}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{comparisons_bucket.png}
+\caption{BUCKET – porównania dla dwóch zakresów.}
+\end{figure}
+
+Co ciekawe, wykresy na różnych zakresch danych
+prawie idealnie się pokrywają.  
+To oznacza, że poprawnie działa zarówno modyfikacja,
+jak i sam generator C++ (rozkłada dane równomiernie, bo intuicyjnie wydawało się, że na większych przedziałach elementy będą się rozkładały nierównomiernnie).
+
+\subsection{QUICK SORT vs BUCKET SORT}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{quick_vs_bucket_random_comparisons.png}
+\caption{Porównania: QUICK i BUCKET.}
+\end{figure}
+
+Dla losowych danych BUCKET SORT radzi sobie zaskakująco dobrze
+i przy dużych $n$ ma mniej operacji niż QUICK (nawet ten z dwoma pivotami).
+
+\section{Wnioski}
+
+\begin{itemize}
+\item RADIX SORT (szczególnie baza 16) jest najszybszy dla liczb całkowitych.
+\item QUICK z dwoma pivotami działa trochę lepiej niż zwykły QUICK, ale czasami może być nawet wolnieszy.
+\item BUCKET SORT wygrywa z QUICK SORT dla równomiernych danych.
+\item Generator losowy w C++ faktycznie rozrzuca liczby równomiernie.
+\end{itemize}
+
+Cały kod znajduję się w katalogu \texttt{lista2} na GitHub.
+
+\end{document}
